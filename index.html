@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Ledger — Daily Expense Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Header -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">₹</span>
+      <div class="brand-text">
+        <h1>Ledger</h1>
+        <p id="todayLabel">—</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="syncBtn" title="Sync with sheet">
+        <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- Summary wallet card -->
+    <section class="wallet-card">
+      <div class="wallet-glow"></div>
+      <div class="wallet-top">
+        <span class="wallet-label">Balance (selected period)</span>
+        <span class="wallet-status" id="syncStatus">Saved locally</span>
+      </div>
+      <div class="wallet-balance" id="balanceAmt">₹0</div>
+      <div class="wallet-row">
+        <div class="wallet-metric in">
+          <span class="wm-label">Money In</span>
+          <span class="wm-val" id="totalIn">₹0</span>
+        </div>
+        <div class="wallet-metric out">
+          <span class="wm-label">Money Out</span>
+          <span class="wm-val" id="totalOut">₹0</span>
+        </div>
+      </div>
+      <div class="wallet-divider"></div>
+      <div class="wallet-row two">
+        <div class="wallet-metric small">
+          <span class="wm-label">Cash</span>
+          <span class="wm-val" id="totalCash">₹0</span>
+        </div>
+        <div class="wallet-metric small">
+          <span class="wm-label">Online</span>
+          <span class="wm-val" id="totalOnline">₹0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filters -->
+    <section class="filters">
+      <div class="search-row">
+        <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5L20.49 19l-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by name...">
+        <select id="monthSelect"></select>
+      </div>
+      <div class="chip-row" id="typeChips">
+        <button class="chip active" data-type="all">All</button>
+        <button class="chip in" data-type="in">In</button>
+        <button class="chip out" data-type="out">Out</button>
+      </div>
+      <div class="chip-row" id="modeChips">
+        <button class="chip active" data-mode="all">Cash + Online</button>
+        <button class="chip" data-mode="cash">💵 Cash</button>
+        <button class="chip" data-mode="online">📲 Online</button>
+      </div>
+    </section>
+
+    <!-- Entries -->
+    <section class="entries" id="entries">
+      <!-- filled by JS -->
+    </section>
+
+    <div class="empty-state" id="emptyState" hidden>
+      <p>No entries found.</p>
+      <span>Tap + below to add your first entry.</span>
+    </div>
+
+  </main>
+
+  <!-- Floating Add Button -->
+  <button class="fab" id="addBtn" aria-label="Add new entry">
+    <svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>
+  </button>
+
+</div>
+
+<!-- Add / Edit Entry Sheet -->
+<div class="sheet-overlay" id="entryOverlay">
+  <div class="sheet" id="entrySheet">
+    <div class="sheet-handle"></div>
+    <h2 id="sheetTitle">New Entry</h2>
+
+    <div class="type-toggle">
+      <button type="button" class="toggle-btn in active" data-type="in">↓ Money In</button>
+      <button type="button" class="toggle-btn out" data-type="out">↑ Money Out</button>
+    </div>
+
+    <form id="entryForm">
+      <label class="field">
+        <span>Amount (₹)</span>
+        <input type="number" id="fAmount" inputmode="decimal" placeholder="0" required min="0" step="0.01">
+      </label>
+
+      <label class="field">
+        <span id="personLabel">Received From (Name)</span>
+        <input type="text" id="fPerson" placeholder="e.g. Rakesh Ji, Suresh Marble..." required autocomplete="off" list="personSuggestions">
+        <datalist id="personSuggestions"></datalist>
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span>Date</span>
+          <input type="date" id="fDate" required>
+        </label>
+        <label class="field">
+          <span>Time</span>
+          <input type="time" id="fTime" required>
+        </label>
+      </div>
+
+      <label class="field">
+        <span>Payment Mode</span>
+        <div class="mode-toggle">
+          <button type="button" class="mode-btn active" data-mode="cash">💵 Cash</button>
+          <button type="button" class="mode-btn" data-mode="online">📲 Online</button>
+        </div>
+      </label>
+
+      <label class="field">
+        <span>Note (optional)</span>
+        <input type="text" id="fNote" placeholder="e.g. marble order advance">
+      </label>
+
+      <div class="sheet-actions">
+        <button type="button" class="btn ghost" id="deleteEntryBtn" hidden>Delete</button>
+        <button type="button" class="btn ghost" id="cancelBtn">Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
