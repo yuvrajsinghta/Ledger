@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -23,6 +24,12 @@
       </div>
     </div>
     <div class="topbar-actions">
+      <button class="icon-btn" id="peopleBtn" title="Tags / People">
+        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      </button>
+      <button class="icon-btn" id="exportBtn" title="Export data">
+        <svg viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg>
+      </button>
       <button class="icon-btn" id="syncBtn" title="Sync with sheet">
         <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
       </button>
@@ -31,76 +38,165 @@
 
   <main class="content">
 
-    <!-- Summary wallet card -->
-    <section class="wallet-card">
-      <div class="wallet-glow"></div>
-      <div class="wallet-top">
-        <span class="wallet-label">Balance (selected period)</span>
-        <span class="wallet-status" id="syncStatus">Saved locally</span>
-      </div>
-      <div class="wallet-balance" id="balanceAmt">₹0</div>
-      <div class="wallet-row">
-        <div class="wallet-metric in">
-          <span class="wm-label">Money In</span>
-          <span class="wm-val" id="totalIn">₹0</span>
-        </div>
-        <div class="wallet-metric out">
-          <span class="wm-label">Money Out</span>
-          <span class="wm-val" id="totalOut">₹0</span>
-        </div>
-      </div>
-      <div class="wallet-divider"></div>
-      <div class="wallet-row two">
-        <div class="wallet-metric small">
-          <span class="wm-label">Cash</span>
-          <span class="wm-val" id="totalCash">₹0</span>
-        </div>
-        <div class="wallet-metric small">
-          <span class="wm-label">Online</span>
-          <span class="wm-val" id="totalOnline">₹0</span>
-        </div>
-      </div>
-    </section>
+    <!-- ========================= LEDGER VIEW ========================= -->
+    <div id="ledgerView">
 
-    <!-- Filters -->
-    <section class="filters">
-      <div class="search-row">
-        <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5L20.49 19l-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>
-        <input type="text" id="searchInput" placeholder="Search by name...">
-        <select id="monthSelect"></select>
-      </div>
-      <div class="chip-row" id="typeChips">
-        <button class="chip active" data-type="all">All</button>
-        <button class="chip in" data-type="in">In</button>
-        <button class="chip out" data-type="out">Out</button>
-      </div>
-      <div class="chip-row" id="modeChips">
-        <button class="chip active" data-mode="all">Cash + Online</button>
-        <button class="chip" data-mode="cash">💵 Cash</button>
-        <button class="chip" data-mode="online">📲 Online</button>
-      </div>
-    </section>
+      <!-- Summary wallet card -->
+      <section class="wallet-card">
+        <div class="wallet-glow"></div>
+        <div class="wallet-top">
+          <span class="wallet-label">Balance (selected period)</span>
+          <span class="wallet-status" id="syncStatus">Saved locally</span>
+        </div>
+        <div class="wallet-balance" id="balanceAmt">₹0</div>
+        <div class="wallet-row">
+          <div class="wallet-metric in">
+            <span class="wm-label">Money In</span>
+            <span class="wm-val" id="totalIn">₹0</span>
+          </div>
+          <div class="wallet-metric out">
+            <span class="wm-label">Money Out</span>
+            <span class="wm-val" id="totalOut">₹0</span>
+          </div>
+        </div>
+        <div class="wallet-divider"></div>
+        <div class="wallet-row two">
+          <div class="wallet-metric small">
+            <span class="wm-label">Cash</span>
+            <span class="wm-val" id="totalCash">₹0</span>
+          </div>
+          <div class="wallet-metric small">
+            <span class="wm-label">Online</span>
+            <span class="wm-val" id="totalOnline">₹0</span>
+          </div>
+        </div>
 
-    <!-- Entries -->
-    <section class="entries" id="entries">
-      <!-- filled by JS -->
-    </section>
+        <div class="period-row" id="periodRow">
+          <button class="period-chip active" data-period="all">All</button>
+          <button class="period-chip" data-period="today">Today</button>
+          <button class="period-chip" data-period="week">This Week</button>
+          <button class="period-chip" data-period="7">Last 7d</button>
+          <button class="period-chip" data-period="15">Last 15d</button>
+          <button class="period-chip" data-period="month">This Month</button>
+          <button class="period-chip" data-period="30">Last 30d</button>
+          <button class="period-chip" data-period="custom">Custom</button>
+        </div>
+        <div class="custom-range-row" id="customRangeRow" hidden>
+          <input type="date" id="customFrom">
+          <span>to</span>
+          <input type="date" id="customTo">
+          <button type="button" class="btn-mini" id="applyCustomRange">Apply</button>
+        </div>
+      </section>
 
-    <div class="empty-state" id="emptyState" hidden>
-      <p>No entries found.</p>
-      <span>Tap + below to add your first entry.</span>
+      <!-- Trend chart -->
+      <section class="chart-card">
+        <div class="chart-head">
+          <span class="chart-title">Trend</span>
+          <div class="chart-legend">
+            <span class="legend-dot in"></span> In
+            <span class="legend-dot out"></span> Out
+          </div>
+        </div>
+        <div id="chartWrap"></div>
+      </section>
+
+      <!-- Filters -->
+      <section class="filters">
+        <div class="search-row">
+          <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5L20.49 19l-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>
+          <input type="text" id="searchInput" placeholder="Search by name...">
+        </div>
+        <div class="chip-row" id="typeChips">
+          <button class="chip active" data-type="all">All</button>
+          <button class="chip in" data-type="in">In</button>
+          <button class="chip out" data-type="out">Out</button>
+        </div>
+        <div class="chip-row" id="modeChips">
+          <button class="chip active" data-mode="all">Cash + Online</button>
+          <button class="chip" data-mode="cash">💵 Cash</button>
+          <button class="chip" data-mode="online">📲 Online</button>
+        </div>
+      </section>
+
+      <!-- Entries -->
+      <section class="entries" id="entries">
+        <!-- filled by JS -->
+      </section>
+
+      <div class="empty-state" id="emptyState" hidden>
+        <p>No entries found.</p>
+        <span>Tap + below to add your first entry.</span>
+      </div>
+
+    </div>
+
+    <!-- ========================= DUES VIEW ========================= -->
+    <div id="duesView" hidden>
+
+      <section class="wallet-card dues-card">
+        <div class="wallet-glow"></div>
+        <div class="wallet-top">
+          <span class="wallet-label">Dues Balance</span>
+          <span class="wallet-status">Pending amounts</span>
+        </div>
+        <div class="wallet-row">
+          <div class="wallet-metric in">
+            <span class="wm-label">To Receive</span>
+            <span class="wm-val" id="totalReceivable">₹0</span>
+          </div>
+          <div class="wallet-metric out">
+            <span class="wm-label">To Pay</span>
+            <span class="wm-val" id="totalPayable">₹0</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="filters">
+        <div class="search-row">
+          <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5L20.49 19l-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>
+          <input type="text" id="duesSearchInput" placeholder="Search by name...">
+        </div>
+        <div class="chip-row" id="duesKindChips">
+          <button class="chip active" data-kind="all">All</button>
+          <button class="chip in" data-kind="receivable">To Receive</button>
+          <button class="chip out" data-kind="payable">To Pay</button>
+        </div>
+        <div class="chip-row" id="duesStatusChips">
+          <button class="chip active" data-status="pending">Pending</button>
+          <button class="chip" data-status="settled">Settled</button>
+        </div>
+      </section>
+
+      <section class="entries" id="duesEntries"></section>
+
+      <div class="empty-state" id="duesEmptyState" hidden>
+        <p>Nothing here.</p>
+        <span>Tap + below to add a dues entry.</span>
+      </div>
+
     </div>
 
   </main>
 
-  <!-- Floating Add Button -->
-  <button class="fab" id="addBtn" aria-label="Add new entry">
-    <svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>
-  </button>
+  <!-- Bottom tab bar with raised center action button -->
+  <nav class="tabbar">
+    <button class="tab-btn active" id="tabLedger" data-tab="ledger">
+      <svg viewBox="0 0 24 24"><path d="M4 4h16v2H4V4zm0 7h16v2H4v-2zm0 7h10v2H4v-2z"/></svg>
+      <span>Ledger</span>
+    </button>
+    <button class="fab-center" id="addBtn" aria-label="Add new">
+      <svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>
+    </button>
+    <button class="tab-btn" id="tabDues" data-tab="dues">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+      <span>Dues</span>
+    </button>
+  </nav>
 
 </div>
 
-<!-- Add / Edit Entry Sheet -->
+<!-- Add / Edit Ledger Entry Sheet -->
 <div class="sheet-overlay" id="entryOverlay">
   <div class="sheet" id="entrySheet">
     <div class="sheet-handle"></div>
@@ -155,6 +251,145 @@
     </form>
   </div>
 </div>
+
+<!-- Add / Edit Dues Sheet -->
+<div class="sheet-overlay" id="duesOverlay">
+  <div class="sheet" id="duesSheet">
+    <div class="sheet-handle"></div>
+    <h2 id="duesSheetTitle">New Dues</h2>
+
+    <div class="type-toggle">
+      <button type="button" class="toggle-btn in active" data-kind="receivable">↓ To Receive</button>
+      <button type="button" class="toggle-btn out" data-kind="payable">↑ To Pay</button>
+    </div>
+
+    <form id="duesForm">
+      <label class="field">
+        <span>Amount (₹)</span>
+        <input type="number" id="uAmount" inputmode="decimal" placeholder="0" required min="0" step="0.01">
+      </label>
+
+      <label class="field">
+        <span id="duesPersonLabel">Person Name</span>
+        <input type="text" id="uPerson" placeholder="e.g. Rakesh Ji, Suresh Marble..." required autocomplete="off" list="duesPersonSuggestions">
+        <datalist id="duesPersonSuggestions"></datalist>
+      </label>
+
+      <label class="field">
+        <span>Date</span>
+        <input type="date" id="uDate" required>
+      </label>
+
+      <label class="field">
+        <span>Note (optional)</span>
+        <input type="text" id="uNote" placeholder="e.g. marble slab order">
+      </label>
+
+      <div class="settled-banner" id="settledBanner" hidden>
+        ✓ Settled on <span id="settledOnDate"></span>
+      </div>
+
+      <div class="sheet-actions">
+        <button type="button" class="btn ghost" id="deleteDuesBtn" hidden>Delete</button>
+        <button type="button" class="btn ghost" id="duesCancelBtn">Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+      <button type="button" class="btn settle-btn" id="markSettledBtn" hidden>Mark as Settled</button>
+    </form>
+  </div>
+</div>
+
+<!-- People / Tags Sheet -->
+<div class="sheet-overlay" id="peopleOverlay">
+  <div class="sheet" id="peopleSheet">
+
+    <div id="peopleListScreen">
+      <div class="sheet-handle"></div>
+      <div class="people-head">
+        <h2>Tags</h2>
+        <button type="button" class="btn-mini" id="addTagBtn">+ New Tag</button>
+      </div>
+      <div class="add-tag-row" id="addTagRow" hidden>
+        <input type="text" id="newTagInput" placeholder="Enter name...">
+        <button type="button" class="btn-mini" id="confirmTagBtn">Add</button>
+      </div>
+      <div class="search-row">
+        <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5L20.49 19l-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>
+        <input type="text" id="peopleSearchInput" placeholder="Search tags...">
+      </div>
+      <div class="people-list" id="peopleList"></div>
+      <div class="empty-state" id="peopleEmptyState" hidden>
+        <p>No tags yet</p>
+        <span>Add an entry, or tap + New Tag above.</span>
+      </div>
+      <div class="sheet-actions">
+        <button type="button" class="btn ghost" id="peopleCloseBtn">Close</button>
+      </div>
+    </div>
+
+    <div id="personDetailScreen" hidden>
+      <div class="sheet-handle"></div>
+      <div class="person-detail-head">
+        <button type="button" class="icon-btn small" id="personBackBtn">
+          <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </button>
+        <h2 id="personDetailName">Name</h2>
+        <button type="button" class="icon-btn small" id="deleteTagBtn" hidden title="Delete tag">
+          <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+        </button>
+      </div>
+
+      <div class="person-summary-grid">
+        <div class="person-stat out">
+          <span class="ps-label">Given (Cash)</span>
+          <span class="ps-val" id="personGiven">₹0</span>
+        </div>
+        <div class="person-stat in">
+          <span class="ps-label">Received (Cash)</span>
+          <span class="ps-val" id="personReceived">₹0</span>
+        </div>
+        <div class="person-stat out">
+          <span class="ps-label">To Pay (Dues)</span>
+          <span class="ps-val" id="personPayable">₹0</span>
+        </div>
+        <div class="person-stat in">
+          <span class="ps-label">To Receive (Dues)</span>
+          <span class="ps-val" id="personReceivable">₹0</span>
+        </div>
+      </div>
+
+      <div class="person-net" id="personNetLine">Net: ₹0</div>
+
+      <div class="sheet-actions">
+        <button type="button" class="btn primary" id="personExportExcelBtn">📊 Export Excel</button>
+        <button type="button" class="btn primary" id="personExportPdfBtn">🧾 Export PDF</button>
+      </div>
+
+      <div class="date-heading" style="margin-top:18px;"><span>All Activity</span></div>
+      <div class="entries" id="personHistory"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="sheet-overlay" id="exportOverlay">
+  <div class="sheet" id="exportSheet">
+    <div class="sheet-handle"></div>
+    <h2>Export Data</h2>
+    <p class="settings-note">Exports what's currently visible on screen (respecting your active filters).</p>
+    <div class="sheet-actions" style="margin-top:10px;">
+      <button type="button" class="btn primary" id="exportExcelBtn">📊 Export as Excel</button>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn primary" id="exportPdfBtn">🧾 Export as PDF</button>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn ghost" id="exportCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="printArea"></div>
 
 <div class="toast" id="toast"></div>
 
