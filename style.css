@@ -20,6 +20,7 @@
   --shadow-lift: 0 18px 40px -18px rgba(0,0,0,0.6);
   --font-ui: 'Manrope', system-ui, sans-serif;
   --font-num: 'IBM Plex Mono', ui-monospace, monospace;
+  --app-max: 480px;
 }
 
 *{box-sizing:border-box;}
@@ -33,12 +34,13 @@ body{
 }
 
 .app{
-  max-width: 480px;
+  max-width: var(--app-max);
   margin: 0 auto;
   min-height: 100svh;
   display: flex;
   flex-direction: column;
   padding-bottom: 84px;
+  transition: max-width 0.2s ease;
 }
 
 /* Topbar */
@@ -46,7 +48,7 @@ body{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding: 18px 18px 8px;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) 18px 8px;
   position: sticky;
   top:0;
   z-index: 20;
@@ -268,13 +270,16 @@ body{
   position: fixed;
   bottom: 0; left: 50%;
   transform: translateX(-50%);
-  width:100%; max-width:480px;
+  width:100%; max-width: var(--app-max);
   height: 68px;
   background: var(--bg-2);
   border-top: 1px solid var(--border-strong);
+  border-left: 1px solid var(--border-strong);
+  border-right: 1px solid var(--border-strong);
   display:flex; align-items:center; justify-content:space-around;
   z-index: 40;
   padding-bottom: env(safe-area-inset-bottom, 0);
+  transition: max-width 0.2s ease;
 }
 .tab-btn{
   flex:1; height:100%;
@@ -406,7 +411,7 @@ body{
 }
 .sheet-overlay.open{opacity:1; pointer-events:auto;}
 .sheet{
-  width:100%; max-width:480px;
+  width:100%; max-width: var(--app-max);
   background: var(--bg-2);
   border: 1px solid var(--border-strong);
   border-bottom:none;
@@ -435,6 +440,15 @@ body{
 .toggle-btn.out.active{background:var(--expense-bg); border-color:var(--expense); color:var(--expense);}
 
 .field{display:flex; flex-direction:column; gap:6px; margin-bottom:14px; font-size:12.5px; color:var(--text-dim);}
+.checkbox-field{
+  display:flex; align-items:center; gap:10px;
+  background: var(--surface); border:1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px 14px; cursor:pointer; font-size:13.5px; color: var(--text);
+}
+.checkbox-field input[type="checkbox"]{
+  width:18px; height:18px; accent-color: var(--gold); flex-shrink:0; cursor:pointer;
+}
+#dueToggleField #dueAmountField{margin-top:10px; margin-bottom:0;}
 .field input, .field select{
   background: var(--surface);
   border: 1px solid var(--border);
@@ -481,13 +495,100 @@ body{
 .toast{
   position: fixed; bottom: 84px; left:50%; transform: translateX(-50%) translateY(20px);
   background: var(--surface-2); border:1px solid var(--border-strong);
-  color: var(--text); padding: 11px 18px; border-radius: 30px;
+  color: var(--text); padding: 11px 14px 11px 18px; border-radius: 30px;
   font-size:13px; font-weight:600;
+  display:flex; align-items:center; gap:12px;
   opacity:0; pointer-events:none; transition: all 0.25s ease;
   z-index: 80;
   box-shadow: var(--shadow-lift);
+  max-width: 90vw;
 }
-.toast.show{opacity:1; transform: translateX(-50%) translateY(0);}
+.toast.show{opacity:1; transform: translateX(-50%) translateY(0); pointer-events:auto;}
+.toast-action{
+  background: var(--gold); color:#0A0E1A; border:none;
+  padding: 6px 12px; border-radius:16px; font-family:var(--font-ui);
+  font-weight:800; font-size:12px; cursor:pointer; flex-shrink:0;
+}
+
+/* Quick-add chips */
+.quick-chips{display:flex; gap:6px; flex-wrap:wrap; margin:-8px 0 14px;}
+
+/* CRM-style tag pill input */
+.tag-input-box{
+  display:flex; flex-wrap:wrap; align-items:center; gap:6px;
+  background: var(--surface); border:1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 8px 10px; min-height:46px;
+}
+.tag-input-box:focus-within{border-color: var(--gold);}
+.tag-pills{display:flex; flex-wrap:wrap; gap:6px;}
+.tag-pill{
+  display:flex; align-items:center; gap:5px;
+  background: rgba(91,141,239,0.18); color: var(--gold-bright);
+  padding: 4px 6px 4px 10px; border-radius:14px;
+  font-size:12px; font-weight:700; font-family:var(--font-ui);
+}
+.tag-pill button{
+  background:none; border:none; color: var(--gold-bright); opacity:0.7;
+  cursor:pointer; font-size:14px; line-height:1; padding:2px;
+}
+.tag-pill button:active{opacity:1;}
+.tag-input-box input{
+  flex:1; min-width:100px; background:transparent; border:none; outline:none;
+  color: var(--text); font-family: var(--font-ui); font-size:14px; padding:4px 2px;
+}
+.quick-chip{
+  border:1px solid var(--border); background: var(--surface-2);
+  color: var(--text-dim); padding: 5px 11px; border-radius:14px;
+  font-size:11.5px; font-family:var(--font-ui); font-weight:600; cursor:pointer;
+}
+.quick-chip:active{background: var(--gold); color:#0A0E1A; border-color:var(--gold);}
+
+/* Month-over-month insight */
+.insight-card{
+  margin-top:14px;
+  background: var(--surface); border:1px solid var(--border); border-radius: var(--radius-md);
+  padding: 12px 16px;
+}
+.insight-row{display:flex; justify-content:space-between; align-items:center; padding:4px 0;}
+.insight-label{font-size:12.5px; color:var(--text-dim); font-weight:600;}
+.insight-val{font-family:var(--font-num); font-size:14px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px;}
+.insight-pct{font-size:11px; font-weight:800; padding:2px 7px; border-radius:10px; font-family:var(--font-ui);}
+.insight-pct.good{background:rgba(52,211,153,0.15); color:var(--income);}
+.insight-pct.bad{background:rgba(248,113,113,0.15); color:var(--expense);}
+.insight-pct.flat{background:var(--surface-2); color:var(--text-faint);}
+.insight-sub{font-size:10.5px; color:var(--text-faint); margin-top:6px; text-align:right;}
+
+/* Category badge on entry cards */
+.category-tag{
+  font-size:10px; padding:1px 6px; border-radius:6px;
+  background: rgba(91,141,239,0.15); color: var(--gold-bright);
+  cursor:pointer;
+}
+.category-tag:active{background: rgba(91,141,239,0.3);}
+
+/* Category breakdown */
+.cat-row{margin-bottom:12px; cursor:pointer;}
+.cat-row:last-child{margin-bottom:2px;}
+.cat-row-top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px;}
+.cat-row-name{font-size:12.5px; font-weight:700; color:var(--text);}
+.cat-row-amt{font-family:var(--font-num); font-size:12.5px; font-weight:700; color:var(--gold-bright);}
+.cat-row-track{height:7px; border-radius:5px; background:var(--surface-2); overflow:hidden;}
+.cat-row-fill{height:100%; border-radius:5px; background: linear-gradient(90deg, var(--gold), var(--gold-bright));}
+.cat-empty{padding:14px 0; text-align:center; color:var(--text-faint); font-size:12.5px;}
+
+/* Dues info banner shown live inside entry/dues forms */
+.dues-info-banner{
+  margin: -6px 0 16px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-weight: 600;
+  display:flex; align-items:center; gap:8px;
+}
+.dues-info-banner.owe{ background: var(--expense-bg); border:1px solid var(--expense); color: var(--expense); }
+.dues-info-banner.receive{ background: var(--income-bg); border:1px solid var(--income); color: var(--income); }
+.dues-info-banner.mixed{ background: var(--surface-2); border:1px solid var(--border-strong); color: var(--gold-bright); }
+.dues-info-banner.clear{ background: var(--surface-2); border:1px solid var(--border); color: var(--text-faint); }
 
 /* Print / PDF export */
 #printArea{display:none;}
@@ -514,4 +615,35 @@ body{
 @media (min-width:480px){
   body{background: radial-gradient(circle at 50% -10%, #16233F 0%, var(--bg) 55%) fixed;}
   .app{border-left:1px solid var(--border); border-right:1px solid var(--border);}
+}
+
+/* Tablet and up: wider centered layout, sheets become centered dialogs
+   instead of full-width bottom sheets */
+@media (min-width:700px){
+  :root{ --app-max: 640px; }
+  .sheet-overlay{ align-items:center; padding: 24px; }
+  .sheet{
+    border-radius: 24px;
+    border: 1px solid var(--border-strong);
+    transform: translateY(16px) scale(0.97);
+    max-height: 86svh;
+    box-shadow: var(--shadow-lift);
+  }
+  .sheet-overlay.open .sheet{ transform: translateY(0) scale(1); }
+  .tabbar{ border-radius: 20px 20px 0 0; bottom: 12px; box-shadow: var(--shadow-lift); }
+  .app{ padding-bottom: 96px; }
+  .content{ padding-left: 20px; padding-right: 20px; }
+  .period-row{ flex-wrap: wrap; overflow-x: visible; }
+}
+
+/* Laptop / desktop: extra breathing room, larger type */
+@media (min-width:1024px){
+  :root{ --app-max: 780px; }
+  .content{ padding-left: 28px; padding-right: 28px; }
+  .wallet-balance{ font-size: 44px; }
+  .entry-card, .person-row{ padding: 14px 18px; }
+  .tabbar{ height: 72px; }
+  .fab-center{ width:60px; height:60px; }
+  body{ background-attachment: fixed; }
+  .app{ box-shadow: 0 40px 100px -40px rgba(0,0,0,0.7); }
 }

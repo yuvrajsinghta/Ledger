@@ -2,13 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Ledger — Daily Expense Tracker</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0A0E1A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ledger">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="manifest" href="manifest.json">
 </head>
 <body>
 
@@ -89,6 +96,19 @@
         </div>
       </section>
 
+      <!-- Month-over-month insight -->
+      <section class="insight-card" id="insightCard">
+        <div class="insight-row">
+          <span class="insight-label">Money In</span>
+          <span class="insight-val" id="insightInVal">₹0</span>
+        </div>
+        <div class="insight-row">
+          <span class="insight-label">Money Out</span>
+          <span class="insight-val" id="insightOutVal">₹0</span>
+        </div>
+        <div class="insight-sub">vs same period last month</div>
+      </section>
+
       <!-- Trend chart -->
       <section class="chart-card">
         <div class="chart-head">
@@ -101,11 +121,20 @@
         <div id="chartWrap"></div>
       </section>
 
+      <!-- Category breakdown -->
+      <section class="chart-card" id="categoryCard" hidden>
+        <div class="chart-head">
+          <span class="chart-title">By Tag / Category</span>
+        </div>
+        <div id="categoryBreakdownWrap"></div>
+      </section>
+
       <!-- Filters -->
       <section class="filters">
         <div class="search-row">
           <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 5L20.49 19l-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>
           <input type="text" id="searchInput" placeholder="Search by name...">
+          <select id="categorySelect"></select>
         </div>
         <div class="chip-row" id="typeChips">
           <button class="chip active" data-type="all">All</button>
@@ -212,12 +241,15 @@
         <span>Amount (₹)</span>
         <input type="number" id="fAmount" inputmode="decimal" placeholder="0" required min="0" step="0.01">
       </label>
+      <div class="quick-chips" id="amountQuickChips"></div>
 
       <label class="field">
         <span id="personLabel">Received From (Name)</span>
         <input type="text" id="fPerson" placeholder="e.g. Rakesh Ji, Suresh Marble..." required autocomplete="off" list="personSuggestions">
         <datalist id="personSuggestions"></datalist>
       </label>
+      <div class="quick-chips" id="personQuickChips"></div>
+      <div class="dues-info-banner" id="entryDuesBanner" hidden></div>
 
       <div class="field-row">
         <label class="field">
@@ -237,6 +269,27 @@
           <button type="button" class="mode-btn" data-mode="online">📲 Online</button>
         </div>
       </label>
+
+      <div class="field" id="dueToggleField">
+        <label class="checkbox-field">
+          <input type="checkbox" id="fHasDue">
+          <span>Some amount is still due / pending</span>
+        </label>
+        <div class="field" id="dueAmountField" hidden>
+          <span id="dueAmountLabel">Due Amount (₹)</span>
+          <input type="number" id="fDueAmount" inputmode="decimal" placeholder="0" min="0" step="0.01">
+        </div>
+      </div>
+
+      <label class="field">
+        <span>Tags (optional)</span>
+        <div class="tag-input-box" id="fTagsBox">
+          <span class="tag-pills" id="fTagsPills"></span>
+          <input type="text" id="fTagsText" placeholder="Type a tag, press Enter" list="categorySuggestions" autocomplete="off">
+        </div>
+        <datalist id="categorySuggestions"></datalist>
+      </label>
+      <div class="quick-chips" id="categoryQuickChips"></div>
 
       <label class="field">
         <span>Note (optional)</span>
@@ -268,12 +321,15 @@
         <span>Amount (₹)</span>
         <input type="number" id="uAmount" inputmode="decimal" placeholder="0" required min="0" step="0.01">
       </label>
+      <div class="quick-chips" id="duesAmountQuickChips"></div>
 
       <label class="field">
         <span id="duesPersonLabel">Person Name</span>
         <input type="text" id="uPerson" placeholder="e.g. Rakesh Ji, Suresh Marble..." required autocomplete="off" list="duesPersonSuggestions">
         <datalist id="duesPersonSuggestions"></datalist>
       </label>
+      <div class="quick-chips" id="duesPersonQuickChips"></div>
+      <div class="dues-info-banner" id="duesFormDuesBanner" hidden></div>
 
       <label class="field">
         <span>Date</span>
@@ -391,8 +447,18 @@
 
 <div id="printArea"></div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast">
+  <span id="toastMsg"></span>
+  <button id="toastActionBtn" class="toast-action" hidden></button>
+</div>
 
 <script src="app.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(err => console.warn("Service worker registration failed:", err));
+    });
+  }
+</script>
 </body>
 </html>
